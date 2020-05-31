@@ -1,7 +1,7 @@
 {
   "name": "@igloo15/mqtt-browser-lib",
   "oldVersion": "0.2.0-dev.7",
-  "version": "0.2.0-dev.1",
+  "version": "0.2.0-dev.2",
   "description": "MQTT Browser Library",
   "main": "dist/lib/index.js",
   "scripts": {
@@ -25,11 +25,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/igloo15/basic-typescript-lib.git"
+    "url": "git+https://github.com/igloo15/mqtt-browser-lib.git"
   },
-  "homepage": "https://github.com/igloo15/basic-typescript-lib#readme",
+  "homepage": "https://github.com/igloo15/mqtt-browser-lib#readme",
   "bugs": {
-    "url": "https://github.com/igloo15/basic-typescript-lib/issues"
+    "url": "https://github.com/igloo15/mqtt-browser-lib/issues"
   },
   "author": {
     "name": "igloo15"
