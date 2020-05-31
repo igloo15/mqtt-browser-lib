@@ -1,15 +1,33 @@
-import { MqttClient, connect, IClientOptions, IClientPublishOptions,
-    PacketCallback, CloseCallback, IConnectPacket, Packet, IDisconnectPacket, 
-    IClientSubscribeOptions, ClientSubscribeCallback } from 'mqtt';
+import { MqttClient, connect, IClientOptions, PacketCallback, CloseCallback, 
+    IConnectPacket, Packet, IDisconnectPacket, ClientSubscribeCallback } from 'mqtt';
 import { EventEmitter } from 'events';
 import StrictEventEmitter from 'strict-event-emitter-types';
 import { MqttMessage } from './mqttmessage';
+import { ISubscribeOptions, IPublishOptions } from './types';
 
+/**
+ * Available Events on RawConnection
+ */
 interface Events {
+    /**
+     * Get Connection message
+     */
     onConnected: (packet: IConnectPacket) => void
+    /**
+     * Get Disconnected message
+     */
     onDisconnected: (data: any) => void;
+    /**
+     * Get a MqttMessage
+     */
     onMessage: (message: MqttMessage) => void;
+    /**
+     * Get Error message
+     */
     onError: (msg: Error) => void;
+    /**
+     * Get Log Message
+     */
     onLogMessage: (msg: {status: string, message: string}) => void;
 }
 
@@ -57,15 +75,62 @@ export class RawConnection {
     }
 
     /**
-     * Connect to a mqtt broker
+     * Connect Asyncly
      */
-    public connect() {
+    public async connectAsync() {
+        const promise = new Promise((resolve, reject) => {
+            const connectionListener = () => {
+                removeListeners();
+                resolve(true);
+            };
+            const disconnectListener = () => {
+                removeListeners();
+                reject(false);
+            };
+
+            this.events.on('onConnected', connectionListener);
+            this.events.on('onDisconnected', disconnectListener);
+
+            const removeListeners = () => {
+                this.events.removeListener('onConnected', connectionListener);
+                this.events.removeListener('onDisconnected', disconnectListener);
+            }
+        });
+
         this.client = connect(`ws://${this.host}:${this.port}/mqtt`, this.opts);
-        this.client.on('connect', (connack: IConnectPacket) => { this.events.emit('onConnected', connack); });
-        this.client.on('close', () => { this.events.emit('onDisconnected', {}); });
+        this.client.on('connect', (connack: IConnectPacket) => { 
+            this.events.emit('onConnected', connack); 
+        });
+        this.client.on('close', () => { 
+            this.events.emit('onDisconnected', {}); 
+        });
         this.client.on('reconnect', () => { this.events.emit('onLogMessage', {status: 'warn', message: 'reconnecting'}); });
         this.client.on('message', this.onMessageRecieved);
         this.client.on('error', this.onErrorReceived);
+
+        return promise;
+    }
+
+    /**
+     * Connect to a mqtt broker
+     */
+    public connect() {
+        this.connectAsync();
+    }
+
+    /**
+     * Disconnect Asyncly
+     * @param cb Optional callback for disconnecting
+     */
+    public async disconnectAsync(cb?: CloseCallback) {
+        return new Promise((resolve, reject) => {
+            this.client?.end(false, () => {
+                if (cb) {
+                    cb();
+                }
+                resolve();
+            });
+        });
     }
 
     /**
@@ -73,7 +138,7 @@ export class RawConnection {
      * @param cb Callback returned when successful
      */
     public disconnect(cb?: CloseCallback) {
-        this.client?.end(false, cb);
+        this.disconnectAsync(cb);
     }
 
     /**
@@ -83,7 +148,7 @@ export class RawConnection {
      * @param callback The callback of subscription call
      */
     public subscribe(topic: string,
-                     opts?: IClientSubscribeOptions,
+                     opts?: ISubscribeOptions,
                      callback?: ClientSubscribeCallback) {
         this.events.emit('onLogMessage', {status: 'info', message: `Subscribing to ${topic}`});
         if (opts) {
@@ -113,7 +178,7 @@ export class RawConnection {
     public publish(
             topic: string,
             message: string | Buffer,
-            opts?: IClientPublishOptions,
+            opts?: IPublishOptions,
             callback?: PacketCallback) {
         this.events.emit('onLogMessage', {status: 'info', message: `Publishing to ${topic}`});
         this.client?.publish(topic, message, opts ? opts : {qos: 0}, callback);
@@ -138,9 +203,13 @@ export class RawConnection {
     private onMessageRecieved = (topic: string, payload: Buffer, packet: Packet) => {
         try {
             switch (packet.cmd) {
-                case 'connect': this.events.emit('onConnected', packet as IConnectPacket); break;
+                case 'connect': 
+                    this.events.emit('onConnected', packet as IConnectPacket); 
+                    break;
                 case 'publish':
-                    this.events.emit('onMessage', new MqttMessage(packet.topic, packet.payload));
+                    this.events.emit(
+                        'onMessage', 
+                        new MqttMessage(packet.topic, packet.payload, packet.properties?.userProperties));
                     break;
                 case 'disconnect': this.events.emit('onDisconnected', packet as IDisconnectPacket); break;
             }

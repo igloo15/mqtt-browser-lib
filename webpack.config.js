@@ -2,7 +2,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-    entry: './src/index.ts',
+    entry: './src/test.ts',
     devtool: 'eval-source-map',
     devServer: {
         contentBase: './dist'
@@ -35,7 +35,7 @@ module.exports = {
             {
                 test: /\.tsx?$/,
                 use: 'ts-loader',
-                exclude: /node_modules/
+                exclude: [/node_modules/]
             }
         ]
     },

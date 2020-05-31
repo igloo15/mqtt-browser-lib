@@ -12,15 +12,18 @@ export class MqttMessage {
      */
     data: string | Buffer;
 
+    userProperties: Object | undefined;
+
     /**
      * Construct a Mqtt Message with topic and data
      * 
      * @param topic The topic of the MqttMessage
      * @param data The data of the MqttMessage
      */
-    constructor(topic: string, data: string | Buffer) {
+    constructor(topic: string, data: string | Buffer, properties?: Object) {
         this.topic = topic;
         this.data = data;
+        this.userProperties = properties;
     }
 
     /**
