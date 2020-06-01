@@ -175,13 +175,20 @@ export class RawConnection {
      * @param opts The options to publish
      * @param callback A callback to determine if publish is successful
      */
-    public publish(
-            topic: string,
-            message: string | Buffer,
-            opts?: IPublishOptions,
-            callback?: PacketCallback) {
+    public publish(topic: string, message: string | Buffer, opts?: IPublishOptions, callback?: PacketCallback) {
         this.events.emit('onLogMessage', {status: 'info', message: `Publishing to ${topic}`});
         this.client?.publish(topic, message, opts ? opts : {qos: 0}, callback);
+    }
+
+    /**
+     * Publish a json message
+     * @param topic The topic to publish on
+     * @param message The message to publish
+     * @param opts The options to publish
+     * @param callback A callback to determine if publish is successful
+     */
+    public publishJson(topic: string, message: any, opts?: IPublishOptions, callback?: PacketCallback) {
+        this.publish(topic, JSON.stringify(message), opts, callback);
     }
 
     /**
