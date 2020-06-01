@@ -1,9 +1,9 @@
 {
   "name": "@igloo15/mqtt-browser-lib",
   "oldVersion": "0.2.0-dev.7",
-  "version": "0.2.0-dev.2",
+  "version": "0.3.0-dev.1",
   "description": "MQTT Browser Library",
-  "main": "dist/lib/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "update:version:all": "npm-run-all update:version:pkg update:version:file",
     "update:version:pkg": "node ./config/update-version.js",
